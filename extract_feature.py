@@ -78,7 +78,7 @@ def cut_word(real_comment):
         print('----------------->')
         after_cut_word.extend(seg_list)
         # break
-    print(after_cut_word)
+    # print(after_cut_word)
     return after_cut_word
 
 
@@ -88,12 +88,38 @@ def remove_stop_word(after_cut_word):
     :param after_cut_word:
     :return:
     """
+    non_empty = [i for i in after_cut_word if i != ' ']  # 去除空白符
+    stop_word_collection = []
+    with open('stop_word/所有停用词.txt', 'r', encoding='utf8') as f:
+        for line in f.readlines():
+            if line != '\n':
+                stop_word_collection.append(line)
+                # print(line)
+    after_remove = []
+    for word in non_empty:
+        if word not in stop_word_collection:
+            after_remove.append(word)
+    return after_remove
+
+
+def continue_remove_useless_word(after_remove):
+    """
+    肉眼发现还是有一些无用词语，要进行是否是汉字的判断
+    :param after_remove:
+    :return:
+    """
+    final_result = [char for char in after_remove if '\u4e00' <= char <= '\u9fff']
+    return final_result
 
 
 def main():
     comment = extract_native_comment('comment.json')
     real_comment = shuffle_comment(comment)
     after_cut_word = cut_word(real_comment)
+    after_remove = remove_stop_word(after_cut_word)
+    final_result = continue_remove_useless_word(after_remove)
+    with open('final_result.txt', 'w') as f:
+        f.write(json.dumps(final_result, sort_keys=True, indent=4, ensure_ascii=False))
 
 
 if __name__ == '__main__':
