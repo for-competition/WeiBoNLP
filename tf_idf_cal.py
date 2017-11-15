@@ -25,6 +25,9 @@ def features():
     result = []
     for i in res:
         result.append(''.join(jieba.cut(i)))
+    print('$$$$$$$$')
+    print(result)
+    print('$$$$$$$$')
 
     #compute the values of word with tf-idf
     vectorizer = TfidfVectorizer(max_features=1000)
