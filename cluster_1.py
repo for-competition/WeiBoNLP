@@ -68,18 +68,24 @@ class Prepare(object):
         for item in comment:
             ret = list(jieba.cut(item, cut_all=False))
             all_word.extend(ret)
-        all_word = ' '.join([i for i in all_word if i != " "])
-        analyse.set_stop_words('D:\\Python36 Project\\WuHanNLP_Dev\\stop_word\\所有停用词.txt')
-        result = analyse.extract_tags(all_word, topK=1000, withWeight=True, allowPOS=())
-        no_stop_word = []
-        for item in result:
-            logger.info(item[0])
-            no_stop_word.append(item[0])
-        return no_stop_word
+        corpus = [i for i in all_word if i != " " and i != "龙卷风" and i != "嘴里塞"]
+        # analyse.set_stop_words('D:\\Python36 Project\\WuHanNLP_Dev\\stop_word\\所有停用词.txt')
+        # result = analyse.extract_tags(all_word, topK=1000, withWeight=True, allowPOS=())
+        # no_stop_word = []
+        # for item in result:
+        #     logger.info(item[0])
+        #     no_stop_word.append(item[0])
+        # return no_stop_word
+        return corpus
 
     def cluster(self, corpus):
         """
         开始聚类
+        sklearn里面的TF-IDF主要用到了两个函数：CountVectorizer()和TfidfTransformer()。
+        CountVectorizer是通过fit_transform函数将文本中的词语转换为词频矩阵。
+        矩阵元素weight[i][j] 表示j词在第i个文本下的词频，即各个词语出现的次数。
+        通过get_feature_names()可看到所有文本的关键字，通过toarray()可看到词频矩阵的结果。
+        TfidfTransformer也有个fit_transform函数，它的作用是计算tf-idf值。
         :param corpus:
         :return:
         """
@@ -113,6 +119,28 @@ class Prepare(object):
         plt.legend()
         plt.show()
 
+    def get_label(self, corpus, n_cluster=6):
+        """
+        经过matplotlib作图可知最好的簇的个数为6
+        :param corpus
+        :param n_cluster:
+        :return:
+        """
+        vectorizer = CountVectorizer()
+        transformer = TfidfTransformer()
+        tf_idf = transformer.fit_transform(vectorizer.fit_transform(corpus))
+        train_x, test_x = train_test_split(tf_idf, test_size=0.2)
+        km = KMeans(n_clusters=n_cluster)
+        km.fit(train_x)
+        order_centroids = km.cluster_centers_.argsort()[:, ::-1]
+        terms = vectorizer.get_feature_names()
+        print(vectorizer.get_stop_words())
+        for i in range(n_cluster):
+            print("Cluster %d:" % i, end='')
+            for ind in order_centroids[i, :10]:
+                print(' %s' % terms[ind], end='')
+            print()
+
 
 def main():
     prepare = Prepare('comment.json')
@@ -120,7 +148,8 @@ def main():
     comment = prepare.remove_noise_text(raw_comment)
     no_stop_word = prepare.cut_word(comment)
     cluster_result = prepare.cluster(no_stop_word)
-    prepare.draw(cluster_result)
+    # prepare.draw(cluster_result)
+    prepare.get_label(no_stop_word)
     # with open('no_stop_word.json', 'w', encoding='utf8') as f:
     #     f.write(json.dumps(no_stop_word, sort_keys=True, indent=4, ensure_ascii=False))
 
