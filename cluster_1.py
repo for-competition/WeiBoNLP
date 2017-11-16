@@ -1,5 +1,6 @@
 #! python3
 # -*- coding: utf-8 -*-
+import os
 import json
 import jieba
 import logging
@@ -89,7 +90,16 @@ class Prepare(object):
         :param corpus:
         :return:
         """
-        vectorizer = CountVectorizer()
+        base_path = os.path.abspath(os.path.dirname(__file__))
+        stop_word_path = os.path.join(base_path, 'stop_word')
+        stop_word_list = []
+        with open('%s/%s.txt' % (stop_word_path, '所有停用词'), 'r', encoding='utf8') as f:
+            for line in f.readlines():
+                stop_word_list.append(line.replace('\n', ''))
+        """
+        指定停用词
+        """
+        vectorizer = CountVectorizer(stop_words=stop_word_list)
         transformer = TfidfTransformer()
         tf_idf = transformer.fit_transform(vectorizer.fit_transform(corpus))
         train_x, test_x = train_test_split(tf_idf, test_size=0.2)
@@ -119,9 +129,9 @@ class Prepare(object):
         plt.legend()
         plt.show()
 
-    def get_label(self, corpus, n_cluster=6):
+    def get_label(self, corpus, n_cluster=5):
         """
-        经过matplotlib作图可知最好的簇的个数为6
+        经过matplotlib作图可知最好的簇的个数为5
         :param corpus
         :param n_cluster:
         :return:
@@ -139,7 +149,7 @@ class Prepare(object):
             print("Cluster %d:" % i, end='')
             for ind in order_centroids[i, :10]:
                 print(' %s' % terms[ind], end='')
-            print()
+            print('\n')
 
 
 def main():
@@ -148,7 +158,7 @@ def main():
     comment = prepare.remove_noise_text(raw_comment)
     no_stop_word = prepare.cut_word(comment)
     cluster_result = prepare.cluster(no_stop_word)
-    # prepare.draw(cluster_result)
+    prepare.draw(cluster_result)
     prepare.get_label(no_stop_word)
     # with open('no_stop_word.json', 'w', encoding='utf8') as f:
     #     f.write(json.dumps(no_stop_word, sort_keys=True, indent=4, ensure_ascii=False))
