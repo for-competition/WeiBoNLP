@@ -1,2 +1,2 @@
 # WeiBoNLP
-微博语义情感分析
+Sentiment Analysis: 微博语义情感分析
